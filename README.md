@@ -1,6 +1,6 @@
 # Name
 
-`ngx_http_error_log_write_module` allows setting the variable to the given value before access log writing.
+`ngx_http_error_log_write_module` allows conditional writing of custom error log entries in nginx configuration.
 
 # Table of Content
 
@@ -21,19 +21,18 @@ This Nginx module is currently considered experimental. Issues and PRs are welco
 # Synopsis
 
 ```nginx
-log_format main '$remote_addr - $remote_user [$time_local] '
-                    '"$request" $status $body_bytes_sent '
-                    '"$http_referer" "$http_user_agent" '
-                    '"$log_field1" "$log_field2"';
-access_log /spool/logs/nginx-access.log;
+error_log_write level=info message="main test log";
 
 server {
     listen 127.0.0.1:80;
     server_name localhost;
 
+    error_log_write  message="server test log" if=$arg_test; 
+
     location / {
-        error_log_write $log_field1 $upstream_http_custom_header1;
-        error_log_write $log_field2 $upstream_http_custom_header2;
+        error_log_write level=warn message="auth required" if!=$http_authorization;
+        auth_baisc "auth required";
+        auth_basic_user_file conf/htpasswd;
         proxy_pass http://example.upstream.com;
     }
 }
@@ -47,14 +46,13 @@ To use theses modules, configure your nginx branch with `--add-module=/path/to/n
 
 ## error_log_write
 
-**Syntax:** *error_log_write $variable value [if=condition];*
+**Syntax:** *error_log_write [level=log_level] message=text [if=condition];*
 
 **Default:** *-*
 
 **Context:** *http, server, location*
 
-Sets the request variable to the given value before access log writing. The value may contain variables from request or response, such as $upstream_http_*.
-These directives are inherited from the previous configuration level only when there is no directive for the same variable defined at the current level.
+Writing a new error log. All error log entries are inherited unconditionally from the previous configuration level.
 
 # Author
 
