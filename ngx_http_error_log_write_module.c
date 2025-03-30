@@ -169,48 +169,48 @@ ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             s.len = value[n].len - 6;
             s.data = value[n].data + 6;
 
-            if (ngx_strncmp(s.data, "stderr") == 0) {
+            if (s.len = 6 && ngx_strncmp(s.data, "stderr", 6) == 0) {
                 entry->level = NGX_LOG_STDERR;
                 continue;
             }
 
-            if (ngx_strncmp(s.data, "emerg") == 0) {
+            if (s.len = 5 && ngx_strncmp(s.data, "emerg", 5) == 0) {
                 entry->level = NGX_LOG_EMERG;
                 continue;
             }
 
-            if (ngx_strncmp(s.data, "alert") == 0) {
+            if (s.len = 5 && ngx_strncmp(s.data, "alert", 5) == 0) {
                 entry->level = NGX_LOG_ALERT;
                 continue;
             }
 
-            if (ngx_strncmp(s.data, "crit") == 0) {
+            if (s.len = 4 && ngx_strncmp(s.data, "crit", 4) == 0) {
                 entry->level = NGX_LOG_CRIT;
                 continue;
             }
 
-            if (ngx_strncmp(s.data, "err") == 0
-                || ngx_strncmp(s.data, "error") == 0) {
+            if ((s.len = 3 && ngx_strncmp(s.data, "err", 3) == 0)
+                || (s.len = 5 && ngx_strncmp(s.data, "error", 5) == 0)) {
                 entry->level = NGX_LOG_ERR;
                 continue;
             }
 
-            if (ngx_strncmp(s.data, "warn") == 0) {
+            if (s.len = 4 && ngx_strncmp(s.data, "warn", 4) == 0) {
                 entry->level = NGX_LOG_WARN;
                 continue;
             }
 
-            if (ngx_strncmp(s.data, "notice") == 0) {
+            if (s.len = 5 && ngx_strncmp(s.data, "notice", 5) == 0) {
                 entry->level = NGX_LOG_NOTICE;
                 continue;
             }
 
-            if (ngx_strncmp(s.data, "info") == 0) {
+            if (s.len = 4 && ngx_strncmp(s.data, "info", 4) == 0) {
                 entry->level = NGX_LOG_INFO;
                 continue;
             }
 
-            if (ngx_strncmp(s.data, "debug") == 0) {
+            if (s.len = 5 && ngx_strncmp(s.data, "debug", 5) == 0) {
 #if (NGX_DEBUG)
                 entry->level = NGX_LOG_DEBUG;
                 continue;
@@ -330,6 +330,7 @@ ngx_http_error_log_write_merge_loc_conf(ngx_conf_t *cf, void *parent,
 
     ngx_uint_t                            i;
     ngx_http_error_log_write_entry_t     *entry;
+    ngx_http_error_log_write_entry_t     *prev_entries;
 
     if (conf->log_entries == NULL || conf->log_entries->nelts == 0) {
         conf->log_entries = prev->log_entries;
@@ -340,13 +341,15 @@ ngx_http_error_log_write_merge_loc_conf(ngx_conf_t *cf, void *parent,
         return NGX_CONF_OK;
     }
 
+    prev_entries = prev->log_entries->elts;
+
     for (i = 0; i < prev->log_entries->nelts; i++) {
         entry = ngx_array_push(conf->log_entries);
         if (entry == NULL) {
             return NGX_CONF_ERROR;
         }
 
-        *entry = prev->log_entries->elts[i];
+        *entry = prev_entries[i];
     }
 
     return NGX_CONF_OK;
