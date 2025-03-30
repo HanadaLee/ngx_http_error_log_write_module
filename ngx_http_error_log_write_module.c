@@ -11,7 +11,7 @@
 
 typedef struct {
     ngx_uint_t                  level;
-    ngx_http_complex_value_t    message;
+    ngx_http_complex_value_t   *message;
     ngx_http_complex_value_t   *filter;
     ngx_int_t                   negative;
 } ngx_http_error_log_write_entry_t;
@@ -29,19 +29,6 @@ static char *ngx_http_error_log_write_merge_loc_conf(ngx_conf_t *cf,
 static char *ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 static ngx_int_t ngx_http_error_log_write_handler(ngx_http_request_t *r);
-
-
-static ngx_conf_enum_t ngx_http_error_log_write_levels[] = {
-    { ngx_string("emerg"), NGX_LOG_EMERG },
-    { ngx_string("alert"), NGX_LOG_ALERT },
-    { ngx_string("crit"), NGX_LOG_CRIT },
-    { ngx_string("error"), NGX_LOG_ERR },
-    { ngx_string("warn"), NGX_LOG_WARN },
-    { ngx_string("notice"), NGX_LOG_NOTICE },
-    { ngx_string("info"), NGX_LOG_INFO },
-    { ngx_string("debug"), NGX_LOG_DEBUG },
-    { ngx_null_string, 0 }
-};
 
 
 static ngx_command_t ngx_http_error_log_write_commands[] = {
@@ -90,7 +77,7 @@ ngx_http_error_log_write_handler(ngx_http_request_t *r)
 {
     ngx_http_error_log_write_loc_conf_t  *elwcf;
     ngx_http_error_log_write_entry_t     *entries;
-    ngx_str_t                             msg;
+    ngx_str_t                             message;
     ngx_uint_t                            i;
     ngx_str_t                             val;
 
@@ -109,7 +96,8 @@ ngx_http_error_log_write_handler(ngx_http_request_t *r)
 
         if (entries[i].filter) {
             if (ngx_http_complex_value(r, entries[i].filter, &val)
-                    != NGX_OK) {
+                    != NGX_OK)
+            {
                 return NGX_ERROR;
             }
 
@@ -124,14 +112,21 @@ ngx_http_error_log_write_handler(ngx_http_request_t *r)
             }
         }
 
-        if (ngx_http_complex_value(r, &entries[i].message, &msg) != NGX_OK) {
+        if (ngx_http_complex_value(r, entries[i].message, &message)
+                != NGX_OK)
+        {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                           "error_log_write: failed to evaluate message");
             continue;
         }
 
+        if (entries[i].level == NGX_LOG_DEBUG) {
+            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                      "%V", &message);
+        }
+
         ngx_log_error(entries[i].level, r->connection->log, 0,
-                      "%V", &msg);
+                      "%V", &message);
     }
 
     return NGX_DECLINED;
@@ -145,114 +140,9 @@ ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     ngx_str_t                            *value;
     ngx_http_error_log_write_entry_t     *entry;
-    ngx_uint_t                            level;
-    ngx_http_complex_value_t              cv;
     ngx_uint_t                            n;
     ngx_str_t                             s;
-    ngx_http_complex_value_t             *filter;
-    ngx_uint_t                            negative;
     ngx_http_compile_complex_value_t      ccv;
-
-    value = cf->args->elts;
-    level = NGX_LOG_ERR;
-    filter = NULL;
-    negative = 0;
-
-    ngx_memzero(&cv, sizeof(ngx_http_complex_value_t));
-
-    for (n = 1; n < cf->args->nelts; n++) {
-
-        if (ngx_strncmp(value[n].data, "level=", 6) == 0) {
-            s.len = value[n].len - 6;
-            s.data = value[n].data + 6;
-
-            if (ngx_conf_parse_enum(cf, ngx_http_error_log_write_levels,
-                    &s, &level) != NGX_CONF_OK)
-            {
-                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                    "invalid log level \"%V\"", &s);
-                return NGX_CONF_ERROR;
-            }
-            
-            continue;
-        }
-
-        if (ngx_strncmp(value[n].data, "message=", 8) == 0) {
-            s.data = value[n].data + 8;
-            s.len = value[n].len - 8;
-
-            if (ngx_http_compile_complex_value(&cv, &s) != NGX_OK) {
-                return NGX_CONF_ERROR;
-            }
-
-            continue;
-        }
-
-        if (ngx_strncmp(value[n].data, "if=", 3) == 0) {
-            if (filter != NULL) {
-                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                    "duplicate condition parameter");
-                return NGX_CONF_ERROR;
-            }
-
-            s.len = value[n].len - 3;
-            s.data = value[n].data + 3;
-            negative = 0;
-
-            ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
-            ccv.cf = cf;
-            ccv.value = &s;
-            ccv.complex_value = ngx_palloc(cf->pool,
-                                        sizeof(ngx_http_complex_value_t));
-
-            if (ccv.complex_value == NULL) {
-                return NGX_CONF_ERROR;
-            }
-
-            if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
-                return NGX_CONF_ERROR;
-            }
-
-            filter = ccv.complex_value;
-        }
-
-        if (ngx_strncmp(value[n].data, "if!=", 4) == 0) {
-            if (filter != NULL) {
-                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                    "duplicate condition parameter");
-                return NGX_CONF_ERROR;
-            }
-
-            s.len = value[n].len - 4;
-            s.data = value[n].data + 4;
-            negative = 1;
-
-            ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
-            ccv.cf = cf;
-            ccv.value = &s;
-            ccv.complex_value = ngx_palloc(cf->pool,
-                                        sizeof(ngx_http_complex_value_t));
-
-            if (ccv.complex_value == NULL) {
-                return NGX_CONF_ERROR;
-            }
-
-            if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
-                return NGX_CONF_ERROR;
-            }
-
-            filter = ccv.complex_value;
-        }
-
-        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "invalid parameter \"%V\"", &value[n]);
-        return NGX_CONF_ERROR;
-    }
-
-    if (cv.value.len == 0) {
-        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "error_log_write: "
-            "message parameter is required");
-        return NGX_CONF_ERROR;
-    }
 
     if (elwcf->log_entries == NULL) {
         elwcf->log_entries = ngx_array_create(cf->pool, 1,
@@ -267,10 +157,149 @@ ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    entry->level = level;
-    entry->message = cv;
-    entry->filter = filter;
-    entry->negative = negative;
+    entry->level = NGX_LOG_ERR;
+    entry->filter = NULL;
+    entry->negative = 0;
+
+    value = cf->args->elts;
+
+    for (n = 1; n < cf->args->nelts; n++) {
+
+        if (ngx_strncmp(value[n].data, "level=", 6) == 0) {
+            s.len = value[n].len - 6;
+            s.data = value[n].data + 6;
+
+            if (ngx_strncmp(s.data, "stderr") == 0) {
+                entry->level = NGX_LOG_STDERR;
+                continue;
+            }
+
+            if (ngx_strncmp(s.data, "emerg") == 0) {
+                entry->level = NGX_LOG_EMERG;
+                continue;
+            }
+
+            if (ngx_strncmp(s.data, "alert") == 0) {
+                entry->level = NGX_LOG_ALERT;
+                continue;
+            }
+
+            if (ngx_strncmp(s.data, "crit") == 0) {
+                entry->level = NGX_LOG_CRIT;
+                continue;
+            }
+
+            if (ngx_strncmp(s.data, "err") == 0
+                || ngx_strncmp(s.data, "error") == 0) {
+                entry->level = NGX_LOG_ERR;
+                continue;
+            }
+
+            if (ngx_strncmp(s.data, "warn") == 0) {
+                entry->level = NGX_LOG_WARN;
+                continue;
+            }
+
+            if (ngx_strncmp(s.data, "notice") == 0) {
+                entry->level = NGX_LOG_NOTICE;
+                continue;
+            }
+
+            if (ngx_strncmp(s.data, "info") == 0) {
+                entry->level = NGX_LOG_INFO;
+                continue;
+            }
+
+            if (ngx_strncmp(s.data, "debug") == 0) {
+#if (NGX_DEBUG)
+                entry->level = NGX_LOG_DEBUG;
+                continue;
+#else
+                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                                "nginx was built without debug support");
+                return NGX_CONF_ERROR;
+#endif
+            }
+
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                    "invalid log level \"%V\"", &s);
+            return NGX_CONF_ERROR;
+        }
+
+        if (ngx_strncmp(value[n].data, "message=", 8) == 0) {
+            s.data = value[n].data + 8;
+            s.len = value[n].len - 8;
+
+            ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
+            ccv.cf = cf;
+            ccv.value = &s;
+            ccv.complex_value = ngx_palloc(cf->pool,
+                                        sizeof(ngx_http_complex_value_t));
+
+            if (ccv.complex_value == NULL) {
+                return NGX_CONF_ERROR;
+            }
+
+            if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
+                return NGX_CONF_ERROR;
+            }
+
+            entry->message = ccv.complex_value;
+
+            continue;
+        }
+
+        if (ngx_strncmp(value[n].data, "if=", 3) == 0) {
+            s.len = value[n].len - 3;
+            s.data = value[n].data + 3;
+
+            ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
+            ccv.cf = cf;
+            ccv.value = &s;
+            ccv.complex_value = ngx_palloc(cf->pool,
+                                        sizeof(ngx_http_complex_value_t));
+
+            if (ccv.complex_value == NULL) {
+                return NGX_CONF_ERROR;
+            }
+
+            if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
+                return NGX_CONF_ERROR;
+            }
+            
+            entry->filter = ccv.complex_value;
+            entry->negative = 0;
+
+            continue;
+        }
+
+        if (ngx_strncmp(value[n].data, "if!=", 4) == 0) {
+            s.len = value[n].len - 4;
+            s.data = value[n].data + 4;
+
+            ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
+            ccv.cf = cf;
+            ccv.value = &s;
+            ccv.complex_value = ngx_palloc(cf->pool,
+                                        sizeof(ngx_http_complex_value_t));
+
+            if (ccv.complex_value == NULL) {
+                return NGX_CONF_ERROR;
+            }
+
+            if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
+                return NGX_CONF_ERROR;
+            }
+
+            entry->filter = ccv.complex_value;
+            entry->negative = 1;
+
+            continue;
+        }
+
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "invalid parameter \"%V\"", &value[n]);
+        return NGX_CONF_ERROR;
+    }
 
     return NGX_CONF_OK;
 }
