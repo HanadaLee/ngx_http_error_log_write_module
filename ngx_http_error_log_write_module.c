@@ -169,48 +169,48 @@ ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             s.len = value[n].len - 6;
             s.data = value[n].data + 6;
 
-            if (s.len = 6 && ngx_strncmp(s.data, "stderr", 6) == 0) {
+            if (s.len == 6 && ngx_strncmp(s.data, "stderr", 6) == 0) {
                 entry->level = NGX_LOG_STDERR;
                 continue;
             }
 
-            if (s.len = 5 && ngx_strncmp(s.data, "emerg", 5) == 0) {
+            if (s.len == 5 && ngx_strncmp(s.data, "emerg", 5) == 0) {
                 entry->level = NGX_LOG_EMERG;
                 continue;
             }
 
-            if (s.len = 5 && ngx_strncmp(s.data, "alert", 5) == 0) {
+            if (s.len == 5 && ngx_strncmp(s.data, "alert", 5) == 0) {
                 entry->level = NGX_LOG_ALERT;
                 continue;
             }
 
-            if (s.len = 4 && ngx_strncmp(s.data, "crit", 4) == 0) {
+            if (s.len == 4 && ngx_strncmp(s.data, "crit", 4) == 0) {
                 entry->level = NGX_LOG_CRIT;
                 continue;
             }
 
-            if ((s.len = 3 && ngx_strncmp(s.data, "err", 3) == 0)
-                || (s.len = 5 && ngx_strncmp(s.data, "error", 5) == 0)) {
+            if ((s.len == 3 && ngx_strncmp(s.data, "err", 3) == 0)
+                || (s.len == 5 && ngx_strncmp(s.data, "error", 5) == 0)) {
                 entry->level = NGX_LOG_ERR;
                 continue;
             }
 
-            if (s.len = 4 && ngx_strncmp(s.data, "warn", 4) == 0) {
+            if (s.len == 4 && ngx_strncmp(s.data, "warn", 4) == 0) {
                 entry->level = NGX_LOG_WARN;
                 continue;
             }
 
-            if (s.len = 5 && ngx_strncmp(s.data, "notice", 5) == 0) {
+            if (s.len == 5 && ngx_strncmp(s.data, "notice", 5) == 0) {
                 entry->level = NGX_LOG_NOTICE;
                 continue;
             }
 
-            if (s.len = 4 && ngx_strncmp(s.data, "info", 4) == 0) {
+            if (s.len == 4 && ngx_strncmp(s.data, "info", 4) == 0) {
                 entry->level = NGX_LOG_INFO;
                 continue;
             }
 
-            if (s.len = 5 && ngx_strncmp(s.data, "debug", 5) == 0) {
+            if (s.len == 5 && ngx_strncmp(s.data, "debug", 5) == 0) {
 #if (NGX_DEBUG)
                 entry->level = NGX_LOG_DEBUG;
                 continue;
