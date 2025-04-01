@@ -1,6 +1,6 @@
 # Name
 
-`ngx_http_error_log_write_module` allows conditional writing of custom error log entries in nginx configuration.
+`ngx_http_error_log_write_module` allows writing error log entries based on conditional expressions in nginx configuration files..
 
 # Table of Content
 
@@ -10,7 +10,7 @@
 - [Synopsis](#synopsis)
 - [Installation](#installation)
 - [Directives](#directives)
-  - [log\_var\_set](#error_log_write)
+  - [error\_log\_write](#error_log_write)
 - [Author](#author)
 - [License](#license)
 
