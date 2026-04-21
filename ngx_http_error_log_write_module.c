@@ -113,7 +113,7 @@ ngx_http_error_log_write_handler(ngx_http_request_t *r)
         }
 
         if (ngx_http_complex_value(r, entries[i].message, &message)
-                != NGX_OK)
+            != NGX_OK)
         {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                           "error_log_write: failed to evaluate message");
@@ -122,7 +122,7 @@ ngx_http_error_log_write_handler(ngx_http_request_t *r)
 
         if (entries[i].level == NGX_LOG_DEBUG) {
             ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                      "%V", &message);
+                           "%V", &message);
         }
 
         ngx_log_error(entries[i].level, r->connection->log, 0,
@@ -216,13 +216,13 @@ ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                 continue;
 #else
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                "nginx was built without debug support");
+                                   "nginx was built without debug support");
                 return NGX_CONF_ERROR;
 #endif
             }
 
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                    "invalid log level \"%V\"", &s);
+                               "invalid log level \"%V\"", &s);
             return NGX_CONF_ERROR;
         }
 
