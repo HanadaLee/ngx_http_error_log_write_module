@@ -200,7 +200,7 @@ ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                 continue;
             }
 
-            if (s.len == 5 && ngx_strncmp(s.data, "notice", 5) == 0) {
+            if (s.len == 5 && ngx_strncmp(s.data, "notice", 6) == 0) {
                 entry->level = NGX_LOG_NOTICE;
                 continue;
             }
@@ -297,7 +297,16 @@ ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             continue;
         }
 
-        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "invalid parameter \"%V\"", &value[n]);
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "invalid parameter \"%V\"", &value[n]);
+
+        return NGX_CONF_ERROR;
+    }
+
+    if (entry->message == NULL) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "\"error_log_write\" requires "
+                           "\"message\" parameter");
         return NGX_CONF_ERROR;
     }
 
