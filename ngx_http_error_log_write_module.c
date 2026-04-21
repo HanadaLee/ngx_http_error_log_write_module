@@ -122,11 +122,11 @@ ngx_http_error_log_write_handler(ngx_http_request_t *r)
 
         if (entries[i].level == NGX_LOG_DEBUG) {
             ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                      "error_log_write: %V", &message);
+                      "%V", &message);
         }
 
         ngx_log_error(entries[i].level, r->connection->log, 0,
-                      "error_log_write: %V", &message);
+                      "%V", &message);
     }
 
     return NGX_DECLINED;
