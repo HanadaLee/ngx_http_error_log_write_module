@@ -21,16 +21,16 @@ This Nginx module is currently considered experimental. Issues and PRs are welco
 # Synopsis
 
 ```nginx
-error_log_write level=info message="main test log";
+error_log_write level=info "message=main test log";
 
 server {
     listen 127.0.0.1:80;
     server_name localhost;
 
-    error_log_write  message="server test log" if=$arg_test; 
+    error_log_write "message=server test log" if=$arg_test; 
 
     location / {
-        error_log_write level=warn message="auth required" if!=$http_authorization;
+        error_log_write level=warn "message=auth required" if!=$http_authorization;
         auth_baisc "auth required";
         auth_basic_user_file conf/htpasswd;
         proxy_pass http://example.upstream.com;
