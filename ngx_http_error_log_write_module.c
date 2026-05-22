@@ -18,7 +18,7 @@ typedef struct {
 
 
 typedef struct {
-    ngx_array_t                 *log_entries;
+    ngx_array_t                *log_entries;
 } ngx_http_error_log_write_loc_conf_t;
 
 
@@ -120,11 +120,6 @@ ngx_http_error_log_write_handler(ngx_http_request_t *r)
             continue;
         }
 
-        if (entries[i].level == NGX_LOG_DEBUG) {
-            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                           "%V", &message);
-        }
-
         ngx_log_error(entries[i].level, r->connection->log, 0,
                       "%V", &message);
     }
@@ -200,7 +195,7 @@ ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                 continue;
             }
 
-            if (s.len == 5 && ngx_strncmp(s.data, "notice", 6) == 0) {
+            if (s.len == 6 && ngx_strncmp(s.data, "notice", 6) == 0) {
                 entry->level = NGX_LOG_NOTICE;
                 continue;
             }
@@ -211,14 +206,8 @@ ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             }
 
             if (s.len == 5 && ngx_strncmp(s.data, "debug", 5) == 0) {
-#if (NGX_DEBUG)
                 entry->level = NGX_LOG_DEBUG;
                 continue;
-#else
-                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                   "nginx was built without debug support");
-                return NGX_CONF_ERROR;
-#endif
             }
 
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
