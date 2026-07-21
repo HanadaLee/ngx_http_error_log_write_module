@@ -9,6 +9,7 @@
 - [Status](#status)
 - [Synopsis](#synopsis)
 - [Installation](#installation)
+- [Conditional syntax](#conditional-syntax)
 - [Directives](#directives)
   - [error\_log\_write](#error_log_write)
 - [Author](#author)
@@ -27,11 +28,21 @@ server {
     listen 127.0.0.1:80;
     server_name localhost;
 
-    error_log_write "message=server test log" if=$arg_test; 
+    # With ngx_condition_module
+    condition test_enabled is_not_empty $arg_test;
+    when test_enabled {
+        error_log_write "message=server test log";
+    }
 
     location / {
-        error_log_write level=warn "message=auth required" if!=$http_authorization;
-        auth_baisc "auth required";
+        condition missing_authorization is_empty $http_authorization;
+        when missing_authorization {
+            error_log_write level=warn "message=auth required";
+        }
+
+        # Without ngx_condition_module, use this instead:
+        # error_log_write level=warn "message=auth required" if!=$http_authorization;
+        auth_basic "auth required";
         auth_basic_user_file conf/htpasswd;
         proxy_pass http://example.upstream.com;
     }
@@ -42,15 +53,21 @@ server {
 
 To use theses modules, configure your nginx branch with `--add-module=/path/to/ngx_http_error_log_write_module`.
 
+To enable named conditions, build `ngx_condition_module` and this module statically in the same nginx configuration.
+
+# Conditional syntax
+
+Conditional syntax is selected at compile time. When `ngx_condition_module` is enabled, place `error_log_write` inside an `http`, `server`, or `location` `when` block. The legacy `if=` and `if!=` parameters are rejected. Without `ngx_condition_module`, `when` is unavailable and the legacy parameters remain supported. `if=` matches a non-empty value other than `"0"`; `if!=` matches an empty value or `"0"`.
+
 # Directives
 
 ## error_log_write
 
-**Syntax:** *error_log_write [level=log_level] message=text [if=condition];*
+**Syntax:** *error_log_write [level=log_level] message=text;*
 
 **Default:** *-*
 
-**Context:** *http, server, location*
+**Context:** *http, server, location, http when, server when, location when*
 
 Writing a new error log. All error log entries are inherited unconditionally from the previous configuration level.
 
