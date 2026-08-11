@@ -61,12 +61,12 @@ static ngx_command_t ngx_http_error_log_write_commands[] = {
 static ngx_http_module_t ngx_http_error_log_write_module_ctx = {
     NULL,                                           /* preconfiguration */
     ngx_http_error_log_write_init,                  /* postconfiguration */
-    NULL,                                           /* create main configuration */
-    NULL,                                           /* init main configuration */
-    NULL,                                           /* create server configuration */
-    NULL,                                           /* merge server configuration */
-    ngx_http_error_log_write_create_loc_conf,       /* create location configuration */
-    ngx_http_error_log_write_merge_loc_conf         /* merge location configuration */
+    NULL,                                           /* create main conf */
+    NULL,                                           /* init main conf */
+    NULL,                                           /* create server conf */
+    NULL,                                           /* merge server conf */
+    ngx_http_error_log_write_create_loc_conf,       /* create location conf */
+    ngx_http_error_log_write_merge_loc_conf         /* merge location conf */
 };
 
 
@@ -118,8 +118,7 @@ ngx_http_error_log_write_handler(ngx_http_request_t *r)
         }
 #else
         if (entries[i].filter) {
-            if (ngx_http_complex_value(r, entries[i].filter, &val)
-                    != NGX_OK)
+            if (ngx_http_complex_value(r, entries[i].filter, &val) != NGX_OK)
             {
                 return NGX_ERROR;
             }
@@ -128,6 +127,7 @@ ngx_http_error_log_write_handler(ngx_http_request_t *r)
                 if (!entries[i].negative) {
                     continue;
                 }
+
             } else {
                 if (entries[i].negative) {
                     continue;
@@ -213,7 +213,8 @@ ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             }
 
             if ((s.len == 3 && ngx_strncmp(s.data, "err", 3) == 0)
-                || (s.len == 5 && ngx_strncmp(s.data, "error", 5) == 0)) {
+                || (s.len == 5 && ngx_strncmp(s.data, "error", 5) == 0))
+            {
                 entry->level = NGX_LOG_ERR;
                 continue;
             }
@@ -251,7 +252,7 @@ ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             ccv.cf = cf;
             ccv.value = &s;
             ccv.complex_value = ngx_palloc(cf->pool,
-                                        sizeof(ngx_http_complex_value_t));
+                                           sizeof(ngx_http_complex_value_t));
 
             if (ccv.complex_value == NULL) {
                 return NGX_CONF_ERROR;
@@ -275,7 +276,7 @@ ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             ccv.cf = cf;
             ccv.value = &s;
             ccv.complex_value = ngx_palloc(cf->pool,
-                                        sizeof(ngx_http_complex_value_t));
+                                           sizeof(ngx_http_complex_value_t));
 
             if (ccv.complex_value == NULL) {
                 return NGX_CONF_ERROR;
@@ -284,7 +285,7 @@ ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
                 return NGX_CONF_ERROR;
             }
-            
+
             entry->filter = ccv.complex_value;
             entry->negative = 0;
 
@@ -299,7 +300,7 @@ ngx_http_error_log_write(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             ccv.cf = cf;
             ccv.value = &s;
             ccv.complex_value = ngx_palloc(cf->pool,
-                                        sizeof(ngx_http_complex_value_t));
+                                           sizeof(ngx_http_complex_value_t));
 
             if (ccv.complex_value == NULL) {
                 return NGX_CONF_ERROR;
