@@ -18,7 +18,7 @@ use Test::Nginx;
 select STDERR; $| = 1;
 select STDOUT; $| = 1;
 
-my $t = Test::Nginx->new()->has(qw/http rewrite ngx_condition_module
+my $t = Test::Nginx->new()->has(qw/http rewrite ngx_expr_module
 	ngx_http_error_log_write_module/)->plan(10);
 
 $t->write_file_expand('nginx.conf', <<'EOF');
@@ -41,7 +41,7 @@ http {
 
         error_log %%TESTDIR%%/module.log info;
 
-        condition selected str_eq $arg_log yes;
+        expr selected str_eq $arg_log yes;
 
         when selected {
             error_log_write level=warn message=conditional:$arg_value;

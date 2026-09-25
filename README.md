@@ -28,19 +28,19 @@ server {
     listen 127.0.0.1:80;
     server_name localhost;
 
-    # With ngx_condition_module
-    condition test_enabled is_not_empty $arg_test;
+    # With ngx_expr_module
+    expr test_enabled !is_empty $arg_test;
     when test_enabled {
         error_log_write "message=server test log";
     }
 
     location / {
-        condition missing_authorization is_empty $http_authorization;
+        expr missing_authorization is_empty $http_authorization;
         when missing_authorization {
             error_log_write level=warn "message=auth required";
         }
 
-        # Without ngx_condition_module, use this instead:
+        # Without ngx_expr_module, use this instead:
         # error_log_write level=warn "message=auth required" if!=$http_authorization;
         auth_basic "auth required";
         auth_basic_user_file conf/htpasswd;
@@ -53,11 +53,11 @@ server {
 
 To use theses modules, configure your nginx branch with `--add-module=/path/to/ngx_http_error_log_write_module`.
 
-To enable named conditions, build `ngx_condition_module` and this module statically in the same nginx configuration.
+To enable named conditions, build `ngx_expr_module` and this module statically in the same nginx configuration.
 
 # Conditional syntax
 
-Conditional syntax is selected at compile time. When `ngx_condition_module` is enabled, place `error_log_write` inside an `http`, `server`, or `location` `when` block. The legacy `if=` and `if!=` parameters are rejected. Without `ngx_condition_module`, `when` is unavailable and the legacy parameters remain supported. `if=` matches a non-empty value other than `"0"`; `if!=` matches an empty value or `"0"`.
+Conditional syntax is selected at compile time. When `ngx_expr_module` is enabled, place `error_log_write` inside an `http`, `server`, or `location` `when` block. The legacy `if=` and `if!=` parameters are rejected. Without `ngx_expr_module`, `when` is unavailable and the legacy parameters remain supported. `if=` matches a non-empty value other than `"0"`; `if!=` matches an empty value or `"0"`.
 
 # Directives
 
